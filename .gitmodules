@@ -1,0 +1,3 @@
+[submodule "CODEC"]
+	path = CODEC
+	url = https://github.com/mihirs16/CODEC
