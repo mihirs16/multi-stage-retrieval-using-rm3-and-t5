@@ -1,6 +1,5 @@
 import pyterrier as pt; pt.init()
 from pyterrier.index import IterDictIndexer
-import pyt_splade
 
 from codec_se import iter_file
 

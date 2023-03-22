@@ -19,7 +19,9 @@ source venv/bin/activate
 ./source/Scripts/activate
 
 # install pre-requisites
-pip install requirements.txt
+pip install -r requirements.txt
+pip install --upgrade git+https://github.com/terrierteam/pyterrier_t5.git
+pip install -q git+https://github.com/naver/splade.git git+https://github.com/cmacdonald/pyt_splade.git
 ```
 
 ## Try the Experiments
