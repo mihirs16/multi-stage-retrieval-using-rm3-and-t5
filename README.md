@@ -6,6 +6,10 @@ An end-to-end Search Engine that can index documents for two-stage retrieval. Th
 
 - Fork (Optional) and clone the repository.
 
+```bash
+git clone --recurse-submodules https://github.com/<username>/multi-stage-retrieval-using-splade-and-t5
+```
+
 - Initialise a virtual environment (e.g. venv) and install pre-requisites.
 
 ```bash
@@ -20,11 +24,28 @@ source venv/bin/activate
 
 # install pre-requisites
 pip install -r requirements.txt
-pip install --upgrade git+https://github.com/terrierteam/pyterrier_t5.git
-pip install -q git+https://github.com/naver/splade.git git+https://github.com/cmacdonald/pyt_splade.git
 ```
 
 ## Try the Experiments
 
+- Make sure you download the whole corpus and save it as `CODEC/corpus/codec_documents.jsonl`.
+
+- Index the corpus by using the following command.
+
+```bash
+python -m pyserini.index.lucene \
+  --collection JsonCollection \
+  --input CODEC/corpus/codec_documents.jsonl \
+  --index index/CODEC \
+  --generator DefaultLuceneDocumentGenerator \
+  --threads 1 \
+  --storePositions --storeDocvectors --storeRaw
+```
+
+- Run the retrieval benchmark experiment
+
+```bash
+python experiments/retrieval_ini.py
+```
 
 ## Start the API
