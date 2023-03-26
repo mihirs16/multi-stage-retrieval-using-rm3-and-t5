@@ -4,7 +4,7 @@ import json
 
 
 # set bm25 + rm3
-ranker = LuceneSearcher('index_ini/CODEC/')
+ranker = LuceneSearcher('index/CODEC/')
 ranker.set_bm25(k1=2.5, b=0.6)
 ranker.set_rm3(fb_terms=95, fb_docs=20, original_query_weight=0.6)
 
@@ -22,8 +22,8 @@ for qid in qids:
 results = ranker.batch_search(
     queries = queries,
     qids = qids,
-    k = 100,
-    threads = 14
+    k = 1000,
+    threads = 4
 )
 
 
@@ -31,7 +31,6 @@ results = ranker.batch_search(
 run = []
 for qid in results.keys():
     for result in results[qid]:
-        # print(f"{qid} {result.docid} {result.score:.5f}")
         run.append(ScoredDoc(qid, result.docid, result.score))
 
 
@@ -40,5 +39,5 @@ qrels = read_trec_qrels('CODEC/qrels/document_ndcg.qrels')
 
 
 # measure
-metrics = calc_aggregate([AP, R@1000, nDCG@10], qrels, run)
-print(metrics)
+metrics = calc_aggregate([R@1000], qrels, run)
+print('bm25 + rm3 -> ', metrics)

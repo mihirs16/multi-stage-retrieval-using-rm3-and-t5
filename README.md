@@ -35,7 +35,7 @@ pip install -r requirements.txt
 ```bash
 python -m pyserini.index.lucene \
   --collection JsonCollection \
-  --input CODEC/corpus/codec_documents.jsonl \
+  --input CODEC/corpus/ \
   --index index/CODEC \
   --generator DefaultLuceneDocumentGenerator \
   --threads 1 \
