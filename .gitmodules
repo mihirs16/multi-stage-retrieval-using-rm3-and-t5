@@ -1,3 +1,6 @@
 [submodule "CODEC"]
 	path = CODEC
 	url = https://github.com/mihirs16/CODEC
+[submodule "splade"]
+	path = splade
+	url = https://github.com/naver/splade
