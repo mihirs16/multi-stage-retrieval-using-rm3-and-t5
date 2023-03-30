@@ -26,6 +26,28 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
+## Try the API
+
+- Index the corpus by using the following command.
+
+```bash
+python -m pyserini.index.lucene \
+  --collection JsonCollection \
+  --input CODEC/corpus/ \
+  --index index/CODEC \
+  --generator DefaultLuceneDocumentGenerator \
+  --threads 1 \
+  --storePositions --storeDocvectors --storeRaw
+```
+
+- Start the API
+
+```bash
+python -m flask run
+```
+
+- Make a `GET /retrieve/<"rm3" or "splade">` request.
+
 ## Try the Experiments
 
 - Make sure you download the whole corpus and save it as `CODEC/corpus/codec_documents.jsonl`.
@@ -47,5 +69,3 @@ python -m pyserini.index.lucene \
 ```bash
 python experiments/retrieval_ini.py
 ```
-
-## Start the API
