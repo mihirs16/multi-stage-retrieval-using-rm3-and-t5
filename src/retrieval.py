@@ -1,8 +1,7 @@
-from pyserini.search.lucene import LuceneSearcher, querybuilder
-from pyserini.encode.query import SpladeQueryEncoder
-from pyserini.analysis import Analyzer, get_lucene_analyzer
+import pyterrier as pt
+from pyterrier.batchretrieve import BatchRetrieve
+from pyt_splade import SpladeFactory
 from typing import Literal
-import json
 
 class Retrieval:
     """class for exposing retrieval models
@@ -16,9 +15,8 @@ class Retrieval:
 
     def __init__(
             self, 
-            query_expansion: Literal["rm3", "splade"],
-            index_dir: str = "./index/CODEC/",
-            splade_model: str = "naver/splade-cocondenser-ensembledistil" 
+            index_path: str = "./index/data.properties",
+            splade_model: str = "naver/splade-cocondenser-ensembledistil",
         ):
         """init retrieval model
         
@@ -26,111 +24,55 @@ class Retrieval:
             index_dir: `str`
             query_expansion: "rm3" or "splade"
         """
-        self.index_dir = index_dir
-        
-        self.model = LuceneSearcher(self.index_dir)
-        self.model.set_bm25(k1 = 2.5, b = 0.6)
-
-        self.query_expansion = query_expansion
-        if self.query_expansion == "rm3":
-            self.model.set_rm3(
-                fb_terms = 95, 
-                fb_docs = 20, 
-                original_query_weight = 0.6
-            )
-        elif self.query_expansion == "splade":
-            self.analyzer = Analyzer(get_lucene_analyzer())
-            self.splade = SpladeQueryEncoder(splade_model)
-        else:
-            raise Exception("invalid query expansion method, use `rm3` or `splade`.")
+        self.index = pt.IndexRef.of(index_path)
+        self.tokenise = pt.rewrite.tokenise()
+        self.bm25 = BatchRetrieve(
+            index_location=self.index,
+            wmodel="BM25",
+            controls={
+                "bm25.b": 0.6,
+                "bm25.k_1": 2.5
+            }
+        )
+        self.rm3 = pt.rewrite.RM3(
+            self.index,
+            fb_terms=95,
+            fb_docs=20,
+            fb_lambda=0.6
+        )
+        self.splade = SpladeFactory(model=splade_model)
+        self.reset_query = pt.rewrite.reset()
     
-    def encode_query(self, raw_query: str):
-        """encode a query using SPLADE
-        
-        args:
-            raw_query: `str`
-        
-        returns:
-            encoded query in the form of a 
-            boolean query builder with boosted weights
-            according to SPLADE expanded terms
-        """
-        encoded_query = self.splade.encode(raw_query)
-
-        query_terms = []
-        for term, weight in encoded_query.items():
-            if len(self.analyzer.analyze(term)) > 0:
-                query_terms.append(
-                    querybuilder.get_boost_query(
-                        querybuilder.get_term_query(term), weight
-                    )
-                )
-        
-        should_val = querybuilder.JBooleanClauseOccur['should'].value
-        boolean_qb = querybuilder.get_boolean_query_builder()
-        for query_term in query_terms:
-            boolean_qb.add(query_term, should_val)
-
-        return boolean_qb.build()
-    
-    def search(self, query: str, num_results: int = 100, threads: int = 4) -> list[dict]:
-        """initiate a search for the given query
+    def search(
+            self, 
+            query: str,  
+            num_results: int | str,
+            expansion: None | Literal["rm3", "splade"] = None,
+        ):
+        """initiate a bm25 search for the given query
         
         args:
             query: `str`
-            num_results: number of results to return
+            num_results: number of results to return (default = 100) 
+            expansion: "rm3" or "splade" query expansion model
         
         returns:
-            list of each document as a dict
+            search results pandas.DataFrame 
         """
-        query = self.encode_query(query) if self.query_expansion == "splade" else query
-        hits = self.model.search(query, num_results)
-        docs = self.model.batch_doc(
-            docids=[hit.docid for hit in hits], 
-            threads=threads
-        )
-        
-        results = list()
-        for hit in hits:
-            results.append({
-                    'docid': hit.docid,
-                    'score': hit.score, 
-                    'content': json.loads(docs[hit.docid].raw())
-            })
-        
-        return results
-    
-    def batch_search(
-            self, 
-            queries: list[str], 
-            qids: list[str], 
-            num_results: int = 100,
-            threads: int = 4
-        
-        ) -> dict[str, list[dict]]:
-        """initiate a batch search for the given query
-        
-        args:
-            queries: list of `str` queries
-            qids: list of `str` qids
-            num_results: number of results to return for each query
+        # default number of results 
+        num_results = 100 if num_results is None else int(num_results)
+        bm25 = self.bm25 % num_results
 
-        returns:
-            dict of each qid and list of each result document as a dict 
-        """
-        results = dict()
-        if self.query_expansion == "rm3":
-            hits = self.model.batch_search(queries, qids, num_results, threads)
+        # init engine
+        engine = self.tokenise
 
-            for qid in hits.keys():
-                results[qid] = []
-                for hit in hits[qid]:
-                    results[qid].append({
-                        hit.docid: hit.score
-                    })
+        # build search engine with bm25 and query expansion
+        if expansion == "rm3":
+            engine = engine >> bm25 >> self.rm3 >> bm25 >> self.reset_query >> self.reset_query
+        elif expansion == "splade":
+            engine = self.splade.query() >> bm25 >> self.reset_query
         else:
-            for i in range(len(qids)):
-                results[qids[i]] = self.search(queries[i], num_results)
-        
-        return results
+            engine = engine >> bm25
 
+        engine = engine >> pt.text.get_text(self.index, "text")
+        return engine.search(query)
