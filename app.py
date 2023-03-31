@@ -1,8 +1,10 @@
 from src import Retrieval
+from src import Index
 from flask import Flask, request
 
 app = Flask(__name__)
-retriever = Retrieval()
+index = Index()
+retriever = Retrieval(index)
 
 @app.get('/retrieve/<string:qexp>')
 def retrieve(qexp) -> str:

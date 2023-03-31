@@ -2,6 +2,7 @@ import pyterrier as pt
 from pyterrier.batchretrieve import BatchRetrieve
 from pyt_splade import SpladeFactory
 from typing import Literal
+from .index import Index
 
 class Retrieval:
     """class for exposing retrieval models
@@ -15,7 +16,7 @@ class Retrieval:
 
     def __init__(
             self, 
-            index_path: str = "./index/data.properties",
+            index: Index,
             splade_model: str = "naver/splade-cocondenser-ensembledistil",
         ):
         """init retrieval model
@@ -24,7 +25,7 @@ class Retrieval:
             index_dir: `str`
             query_expansion: "rm3" or "splade"
         """
-        self.index = pt.IndexRef.of(index_path)
+        self.index = index.ref
         self.tokenise = pt.rewrite.tokenise()
         self.bm25 = BatchRetrieve(
             index_location=self.index,
