@@ -1,6 +1,6 @@
 # Multi-stage Retrieval using SPLADE and T5
 
-An end-to-end Search Engine that can index documents for two-stage retrieval. The system focuses on a multi-stage retrieval architecture with query expansion using SPLADE and BM25 for retrieval, and the T5 text-to-text transformer for re-ranking. The proposed framework was evaluated on the [Complex Document and Entity Collection (CODEC)](https://github.com/grill-lab/CODEC), which consists of a corpus of social science domains across History, Economics and Politics. CODEC also defines a document ranking and an entity ranking task which align with each other to improve document ranking through entity query expansion and topic modelling.
+An end-to-end Search Engine that can index documents for two-stage retrieval. The system focuses on a multi-stage retrieval architecture with query expansion using SPLADE or RM3 and BM25 for retrieval, and the T5 text-to-text transformer for re-ranking. The proposed framework was evaluated on the [Complex Document and Entity Collection (CODEC)](https://github.com/grill-lab/CODEC), which consists of a corpus of social science domains across History, Economics and Politics. CODEC also defines a document ranking and an entity ranking task which align with each other to improve document ranking through entity query expansion and topic modelling.
 
 ## Getting Started
 
@@ -26,46 +26,24 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## Try the API
+## Try the Search Engine
 
-- Index the corpus by using the following command.
+- Make sure you download the whole corpus and save it as `CODEC/corpus/codec_documents.jsonl`.
 
-```bash
-python -m pyserini.index.lucene \
-  --collection JsonCollection \
-  --input CODEC/corpus/ \
-  --index index/CODEC \
-  --generator DefaultLuceneDocumentGenerator \
-  --threads 1 \
-  --storePositions --storeDocvectors --storeRaw
-```
-
-- Start the API
+- Start the API Server (Will automatically build the index, or load pre-built index).
 
 ```bash
-python -m flask run
+python app.py
 ```
 
-- Make a `GET /retrieve/<"rm3" or "splade">` request.
+- Open the `localhost:8000` URL in the browser. Select and Model you want to use and type the query in the search box.
 
 ## Try the Experiments
 
 - Make sure you download the whole corpus and save it as `CODEC/corpus/codec_documents.jsonl`.
 
-- Index the corpus by using the following command.
+- Run the following script to show all experiment results and save results to `./results/metrics.csv`.
 
 ```bash
-python -m pyserini.index.lucene \
-  --collection JsonCollection \
-  --input CODEC/corpus/ \
-  --index index/CODEC \
-  --generator DefaultLuceneDocumentGenerator \
-  --threads 1 \
-  --storePositions --storeDocvectors --storeRaw
-```
-
-- Run the retrieval benchmark experiment
-
-```bash
-python experiments/retrieval_ini.py
+python eval.py
 ```
