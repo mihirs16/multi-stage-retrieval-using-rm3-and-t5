@@ -65,7 +65,7 @@ experiment = pt.Experiment(
     topics       = codec_se.get_topics(),
     qrels        = codec_se.get_qrels(),
     eval_metrics = [MAP, R@1000, nDCG@1000,  nDCG@10],
-    save_dir     = './experiments/results/',
+    save_dir     = './results/',
     # save_mode    = 'overwrite',
     verbose      = True,
 )
