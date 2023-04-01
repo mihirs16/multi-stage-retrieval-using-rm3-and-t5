@@ -69,7 +69,8 @@ class Retrieval:
 
         # build search engine with bm25 and query expansion
         if expansion == "rm3":
-            engine = engine >> bm25 >> self.rm3 >> bm25 >> self.reset_query >> self.reset_query
+            engine = engine >> bm25 >> self.rm3 >> bm25 \
+                >> self.reset_query >> self.reset_query
         elif expansion == "splade":
             engine = self.splade.query() >> bm25 >> self.reset_query
         else:

@@ -18,13 +18,17 @@ def retrieve(qexp) -> str:
     return response, 200
 
 
-@app.get('/search')
-def rerank() -> str:
+@app.get('/search/<string:qexp>')
+def rerank(qexp) -> str:
     """retrieve (bm25 + rm3) and rerank (monoT5) search results"""
     num = request.args.get("num")
     query = request.args.get("q")
     if query is None:
         return "invalid or empty query", 400
 
-    response: str = reranker.search(query, num).to_json(orient="index")
+    response: str = reranker.search(query, num, qexp).to_json(orient="index")
     return response, 200
+
+
+if __name__ == "__main__":
+    app.run(port=8000, debug=True)

@@ -1,6 +1,7 @@
 import pyterrier as pt
 from pyterrier_t5 import MonoT5ReRanker
 from .retrieval import Retrieval
+from typing import Literal
 
 class ReRanking:
     """class to expose the re-ranking models
@@ -52,7 +53,8 @@ class ReRanking:
     def search(
             self, 
             query: str,  
-            num_results: int | str
+            num_results: int | str,
+            expansion: None | Literal["rm3", "splade"] = "rm3"
         ):
         """first-stage retrieval and second-stage ranking for a query
 
@@ -62,16 +64,25 @@ class ReRanking:
         """
         num_results = 100 if num_results is None else int(num_results)
         bm25 = self.retrieval.bm25 % num_results
-
-        # stage 1 - BM25 + RM3
-        stage_1 = self.retrieval.tokenise >> bm25 \
-            >> self.retrieval.rm3 >> bm25
         
         # stage 2 - sliding_window + monoT5
         stage_2 = pt.text.get_text(self.retrieval.index, 'text') \
             >> self.sliding_window >> self.monoT5 \
             >> pt.text.max_passage()
+
+        # stage 1 - BM25 + RM3
+        if expansion == "rm3":                              
+            stage_1 = self.retrieval.tokenise >> bm25 \
+                >> self.retrieval.rm3 >> bm25
+            engine = stage_1 >> pt.rewrite.reset() >> stage_2 >> pt.rewrite.reset()
+        
+        # stage 1 - BM25 + SPLADE
+        elif expansion == "splade":
+            stage_1 = self.retrieval.splade.query() >> bm25
+            engine = stage_1 >> pt.rewrite.reset() >> stage_2
+
+        else:
+            raise Exception("invalid query expansion specified.")
         
         # end-to-end search engine
-        engine = stage_1 >> pt.rewrite.reset() >> stage_2 >> pt.rewrite.reset()
         return engine.search(query)
