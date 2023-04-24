@@ -1,4 +1,4 @@
-# Multi-stage Retrieval using SPLADE and T5
+# Multi-stage Retrieval using RM3 or SPLADE and T5
 
 An end-to-end Search Engine that can index documents for two-stage retrieval. The system focuses on a multi-stage retrieval architecture with query expansion using SPLADE or RM3 and BM25 for retrieval, and the T5 text-to-text transformer for re-ranking. The proposed framework was evaluated on the [Complex Document and Entity Collection (CODEC)](https://github.com/grill-lab/CODEC), which consists of a corpus of social science domains across History, Economics and Politics. CODEC also defines a document ranking and an entity ranking task which align with each other to improve document ranking through entity query expansion and topic modelling.
 
